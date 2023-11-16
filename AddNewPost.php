@@ -25,25 +25,32 @@ if (isset($_POST["Submit"])) {
         $_SESSION["ErrorMessage"] = "A categoria deve ter menos de 50 letras.";
     } elseif (strlen($Image) > 50) {
         $_SESSION["ErrorMessage"] = "O nome da imagem deve ter menos de 50 caracteres.";
-    } elseif (strlen($PostDescription) > 1000) {
+    } elseif (strlen($PostDescription) > 999) {
         $_SESSION["ErrorMessage"] = "A descrição do post deve ter menos de 1000 letras.";
-    } else {
-  $sql = "INSERT INTO category(title,author,datetime)";
-  $sql .= "VALUES(:categoryName,:adminName, :dateTime)";
-  $stmt = $ConnectingDB->prepare($sql);
-  $stmt->bindValue(':categoryName', $Category);
-  $stmt->bindValue(':adminName', $Admin);
-  $stmt->bindValue(':dateTime', $DateTimeString);
-  $Execute = $stmt->execute();
+    } else {if (move_uploaded_file($_FILES["Image"]["tmp_name"], $TargetFolder)) {
+        $sql = "INSERT INTO posts(datetime, title, category, author, image, post) ";
+        $sql .= "VALUES(:dateTime, :title, :categoryName, :adminName, :imageName, :postDescription)";
+        $stmt = $ConnectingDB->prepare($sql);
+        $stmt->bindValue(':dateTime', $DateTimeString);
+        $stmt->bindValue(':title', $PostTitle);
+        $stmt->bindValue(':categoryName', $Category);
+        $stmt->bindValue(':adminName', $Admin);
+        $stmt->bindValue(':imageName', $Image);
+        $stmt->bindValue(':postDescription', $PostDescription);
+        $Execute = $stmt->execute();
 
-  if ($Execute) {
-   $_SESSION["SuccessMessage"] = "Categoria de ID " . $ConnectingDB->lastInsertId() . " adicionada com sucesso!";
-   Redirect_to("Categories.php");
-  } else {
-   $_SESSION["ErrorMessage"] = "Algo deu errado! Tente novamente!";
-   Redirect_to("Categories.php");
-  }
- }
+        if ($Execute) {
+            $_SESSION["SuccessMessage"] = "Post com ID " . $ConnectingDB->lastInsertId() . " adicionado com sucesso!";
+            Redirect_to("AddNewPost.php");
+        } else {
+            $_SESSION["ErrorMessage"] = "Algo deu errado no banco de dados! Tente novamente!";
+            Redirect_to("AddNewPost.php");
+        }
+    } else {
+        $_SESSION["ErrorMessage"] = "Falha ao carregar a imagem.";
+        Redirect_to("AddNewPost.php");
+    }
+}
 }
 ?>
 
@@ -61,7 +68,6 @@ if (isset($_POST["Submit"])) {
 </head>
 
 <body>
- <!-- NAVBAR -->
  <div style="height: 10px; background: #27aae1"></div>
  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container">
@@ -116,7 +122,6 @@ if (isset($_POST["Submit"])) {
    </div>
   </div>
  </header>
- <!--  -->
 
  <section class="container py-2 mb-4">
   <div class="row">
@@ -196,7 +201,6 @@ if (isset($_POST["Submit"])) {
   </div>
  </section>
 
- <!--  -->
  <footer class="bg-dark text-white py-4 fixed-bottom">
   <div class="container">
    <div class="row">
